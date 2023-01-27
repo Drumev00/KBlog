@@ -1,0 +1,51 @@
+﻿section.parent-topic {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-parent {
+    display: flex;
+    flex-direction:row;
+    flex-wrap: wrap;
+}
+
+div.topic-picture img {
+    width: 300px;
+    height: 200px;
+}
+
+.topic-picture {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.topic-content {
+    text-overflow: ellipsis;
+    word-wrap: break-word;
+    text-align: center;
+}
+
+.title {
+    text-align: center;
+    text-overflow: ellipsis;
+    word-wrap: break-word;
+}
+
+.topic-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.topic-date p{
+    text-align: end;
+}
+
+.topic-link {
+    background: aliceblue;
+    text-align: center;
+}
+
+.topic-link a {
+    color: firebrick;
+    text-decoration: none;
+}

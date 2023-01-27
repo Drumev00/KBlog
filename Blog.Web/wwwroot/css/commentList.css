@@ -1,0 +1,86 @@
+﻿.comment-grid-wrapper {
+    display: flex;
+}
+
+/*#comment-section {
+    border: 1px solid gray;
+}*/
+
+.comment-grid-wrapper div {
+    margin-left: 15px;
+}
+
+.comment-grid-wrapper img {
+    border-radius: 50%;
+}
+
+.comment-email {
+    margin-bottom: 0px;
+    font-size: 0.9rem;
+    color: grey;
+}
+
+.actual-comment p {
+    margin-left: 4.7rem;
+    background-color: silver;
+    display: inline;
+    padding: 9px;
+    border-radius: 20%;
+}
+
+.comment-rate {
+    display: flex;
+    margin-top: 1rem;
+}
+
+.comment-likes {
+    margin-left: 4.7rem;
+    margin-right: 4.7rem;
+}
+
+.comment-icons {
+    display: flex;
+    margin: 1rem 4.7rem 0rem 4.7rem;
+}
+
+.fa-edit {
+    margin-right: 2.2rem;
+    margin-left: 2.2rem;
+}
+
+.fa-edit:hover {
+    color: cornflowerblue;
+    cursor: pointer;
+}
+
+.fa-trash-alt:hover {
+    color: orangered;
+    cursor: pointer;
+}
+
+.fa-reply:hover {
+    color: cadetblue;
+    cursor: pointer;
+}
+
+#comment-modal-delete-btn {
+    color: white;
+}
+
+#comment-modal-delete-btn:hover {
+    cursor: pointer;
+}
+
+.modal-open {
+    overflow: scroll;
+}
+
+.edit-comment-parent {
+    display: none;
+}
+
+#reply-comment {
+    display: none;
+    width: 70%;
+    margin: 0 0 1rem 4.7rem;
+}
