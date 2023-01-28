@@ -4,15 +4,26 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Blog.Web.Extensions;
 using Blog.Infrastructure.Data.Services.SendGrid;
+using Serilog;
 
 try
 {
 	var builder = WebApplication.CreateBuilder(args);
 
 	// Add services to the container.
-	builder.Services.AddControllers();
 
 	var configuration = builder.Configuration;
+
+	Log.Logger = new LoggerConfiguration()
+		.MinimumLevel.Information()
+		.WriteTo.Console()
+		.WriteTo.Seq(configuration["Serilog:Seq:Url"])
+		.CreateBootstrapLogger();
+
+	builder.Host.UseSerilog();
+
+	Log.Information("Starting up...");
+	builder.Services.AddControllers();
 
 	builder.Services.AddDbContext<ApplicationDbContext>(options =>
 	options.UseSqlServer(
@@ -73,7 +84,11 @@ try
 }
 catch (Exception ex)
 {
-
+	Log.Fatal(ex, "Application accidentally crashed!");
 	throw;
+}
+finally
+{
+	Log.CloseAndFlush();
 }
 

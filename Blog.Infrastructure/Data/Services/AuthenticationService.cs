@@ -3,6 +3,7 @@ using Blog.Infrastructure.DTOs.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -17,24 +18,31 @@ namespace Blog.Infrastructure.Data.Services
 		private readonly ApplicationDbContext _dbContext;
 		private readonly TokenValidationParameters _tokenValidationParams;
 		private readonly IConfiguration _configuration;
+		private readonly ILogger<AuthenticationService> _logger;
 
 		public AuthenticationService(UserManager<User> userManager,
 			ApplicationDbContext dbContext,
-			TokenValidationParameters tokenValidationParameters, IConfiguration configuration)
+			TokenValidationParameters tokenValidationParameters,
+			IConfiguration configuration,
+			ILogger<AuthenticationService> logger)
 		{
 			_userManager = userManager;
 			_dbContext = dbContext;
 			_tokenValidationParams = tokenValidationParameters;
 			_configuration = configuration;
+			_logger = logger;
 		}
 
 		public async Task<string> Register(RegisterRequest request)
 		{
 			var userExists = await _userManager.FindByNameAsync(request.Username);
+			var errorMessage = string.Empty;
 
 			if (userExists != null)
 			{
-				return "User already exists.";
+				errorMessage = "User already exists.";
+				_logger.LogError(errorMessage, request.Username);
+				return errorMessage;
 			}
 
 			User user = new User()
@@ -47,7 +55,9 @@ namespace Blog.Infrastructure.Data.Services
 
 			if (request.Password != request.ConfirmPassword)
 			{
-				return "Passwords should match.";
+				errorMessage = "Passwords should match.";
+				_logger.LogError(errorMessage, request.Password);
+				return errorMessage;
 			}
 
 			var result = await _userManager.CreateAsync(user, request.Password);
@@ -55,7 +65,9 @@ namespace Blog.Infrastructure.Data.Services
 
 			if (!result.Succeeded)
 			{
-				return "User creation failed! Please check user details and try again.";
+				errorMessage = "User creation failed! Please check user details and try again.";
+				_logger.LogError(errorMessage);
+				return errorMessage;
 			}
 
 			return user.Id;
@@ -67,17 +79,23 @@ namespace Blog.Infrastructure.Data.Services
 				.Users
 				.FirstOrDefaultAsync(u => u.Email == request.Email);
 
+			var errorMessage = string.Empty;
+
 			var response = new AuthResponseModel();
 
 			if (user == null)
 			{
-				response.Errors.Add($"User with email {request.Email} was not found.");
+				errorMessage = $"User with email {request.Email} was not found.";
+				_logger.LogError(errorMessage, request.Email);
+				response.Errors.Add(errorMessage);
 			}
 
 			var validPass = await _userManager.CheckPasswordAsync(user, request.Password);
 			if (!validPass)
 			{
-				response.Errors.Add($"Wrong password.");
+				errorMessage = $"Wrong password.";
+				_logger.LogError(errorMessage);
+				response.Errors.Add(errorMessage);
 			}
 
 			if (response.Errors.Count > 0)
@@ -96,6 +114,7 @@ namespace Blog.Infrastructure.Data.Services
 		{
 			var response = new AuthResponseModel();
 			var jwtTokenHandler = new JwtSecurityTokenHandler();
+			var errorMessage = string.Empty;
 
 			// Validation 1
 			var tokenInVerification = jwtTokenHandler.ValidateToken(jwtToken, _tokenValidationParams, out var validatedToken);
@@ -106,7 +125,9 @@ namespace Blog.Infrastructure.Data.Services
 				var isRightAlgoritmUsed = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
 				if (!isRightAlgoritmUsed)
 				{
-					response.Errors.Add("Wrong algoritm is used.");
+					errorMessage = "Wrong algoritm is used.";
+					_logger.LogError(errorMessage);
+					response.Errors.Add(errorMessage);
 				}
 			}
 
@@ -117,7 +138,9 @@ namespace Blog.Infrastructure.Data.Services
 
 			if (expiryDate > DateTime.UtcNow)
 			{
-				response.Errors.Add("Token has not expired yet.");
+				errorMessage = "Token has not expired yet.";
+				_logger.LogError(errorMessage);
+				response.Errors.Add(errorMessage);
 			}
 			if (response.Errors.Count > 0)
 			{

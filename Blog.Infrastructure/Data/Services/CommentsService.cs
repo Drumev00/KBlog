@@ -1,23 +1,28 @@
 ﻿using Blog.Core.Entities;
-using Blog.Infrastructure.DTOs.Comments;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Blog.Infrastructure.Data.Services
 {
 	public class CommentsService
 	{
 		private readonly ApplicationDbContext dbContext;
+		private readonly ILogger<CommentsService> _logger;
 
-		public CommentsService(ApplicationDbContext dbContext)
+		public CommentsService(ApplicationDbContext dbContext, ILogger<CommentsService> logger)
 		{
 			this.dbContext = dbContext;
+			this._logger = logger;
 		}
 
 		public async Task<string> CreateCommentAsync(string content, string userId, string articleId)
 		{
+			var errorMessage = string.Empty;
 			if (string.IsNullOrWhiteSpace(content))
 			{
-				throw new ArgumentException("Comment have to be at least 1 character long.");
+				errorMessage = "Comment have to be at least 1 character long.";
+				_logger.LogError(errorMessage);
+				return errorMessage;
 			}
 
 			var comment = new Comment
@@ -37,12 +42,14 @@ namespace Blog.Infrastructure.Data.Services
 		{
 			var comment = await dbContext
 				.Comments
-				.Where(c => c.Id == commentId && c.UserId == userId && !c.IsDeleted)
-				.FirstOrDefaultAsync();
+				.FirstOrDefaultAsync(c => c.Id == commentId && c.UserId == userId && !c.IsDeleted);
+			var errorMessage = string.Empty;
 
 			if (comment == null)
 			{
-				throw new ArgumentNullException("Such comment does not exists.");
+				errorMessage = "Such comment does not exists.";
+				_logger.LogError(errorMessage);
+				return errorMessage;
 			}
 
 			comment.IsDeleted = true;
@@ -60,13 +67,17 @@ namespace Blog.Infrastructure.Data.Services
 			var comment = await dbContext
 				.Comments
 				.FirstOrDefaultAsync(c => c.Id == commentId && !c.IsDeleted);
+			var errorMessage = string.Empty;
+
 
 			if (!string.IsNullOrWhiteSpace(newContent))
 			{
 
 				if (comment.UserId != userId)
 				{
-					throw new ArgumentException("User can only edit his own comments.");
+					errorMessage = "User can only edit his own comments.";
+					_logger.LogError(errorMessage);
+					return errorMessage;
 				}
 
 				comment.Content = newContent;
@@ -82,43 +93,6 @@ namespace Blog.Infrastructure.Data.Services
 			}
 
 			return result;
-		}
-
-		public async Task<IEnumerable<CommentsListingDTO>> GetAllAsync(string articleId)
-		{
-			var result = new List<CommentsListingDTO>();
-
-			var comments = dbContext
-				.Comments
-				.Where(c => c.ArticleId == articleId && !c.IsDeleted)
-				.OrderByDescending(c => c.Likes)
-				.ThenByDescending(c => c.CreatedOn)
-				.AsQueryable();
-
-			if (comments.Count() == 0 || comments == null)
-			{
-				return result;
-			}
-			else
-			{
-				result = await comments.Select(c => new CommentsListingDTO
-				{
-					Id = c.Id,
-					Content = c.Content,
-					Like = c.Likes,
-					Dislike = c.Dislikes,
-					User = new UserCommentModel
-					{
-						Username = c.User.UserName,
-						Email = c.User.Email,
-						ProfilePic = c.User.ProfilePic,
-						UserId = c.User.Id
-					}
-				})
-				.ToListAsync();
-
-				return result;
-			}
 		}
 	}
 }

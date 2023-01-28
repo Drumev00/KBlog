@@ -4,11 +4,11 @@ namespace Blog.Infrastructure.Data.Services
 {
 	public class ArticlesCategoriesService
 	{
-		private readonly ApplicationDbContext dbContext;
+		private readonly ApplicationDbContext _dbContext;
 
 		public ArticlesCategoriesService(ApplicationDbContext dbContext)
 		{
-			this.dbContext = dbContext;
+			_dbContext = dbContext;
 		}
 
 		public async Task AddAsync(string articleId, string categoryId)
@@ -19,14 +19,14 @@ namespace Blog.Infrastructure.Data.Services
 				CategoryId = categoryId
 			};
 
-			await dbContext.ArticlesCategories.AddAsync(articleCategory);
-			await dbContext.SaveChangesAsync();
+			await _dbContext.ArticlesCategories.AddAsync(articleCategory);
+			await _dbContext.SaveChangesAsync();
 
 		}
 
 		public async Task DeleteAsync(string articleId)
 		{
-			var articlesCategories = await dbContext
+			var articlesCategories = await _dbContext
 				.ArticlesCategories
 				.Where(ac => ac.ArticleId == articleId && !ac.IsDeleted)
 				.ToListAsync();
@@ -34,9 +34,10 @@ namespace Blog.Infrastructure.Data.Services
 			foreach (var articleCategory in articlesCategories)
 			{
 				articleCategory.IsDeleted = true;
+				articleCategory.DeletedOn = DateTime.UtcNow;
 			}
 
-			dbContext.ArticlesCategories.UpdateRange(articlesCategories);
+			await _dbContext.SaveChangesAsync();
 		}
 	}
 }

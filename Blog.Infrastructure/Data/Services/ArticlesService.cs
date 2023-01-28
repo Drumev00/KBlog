@@ -13,15 +13,18 @@ namespace Blog.Infrastructure.Data.Services
 	{
 		private readonly ApplicationDbContext _dbContext;
 		private readonly ArticlesCategoriesService _articlesCategoriesService;
+		private readonly ArticlesSubCategoriesService _articlesSubCategoriesService;
 		private readonly ImagesService _imagesService;
 
 		public ArticlesService(ApplicationDbContext dbContext,
 			ArticlesCategoriesService articlesCategoriesService,
+			ArticlesSubCategoriesService articlesSubCategoriesService,
 			ImagesService imagesService)
 		{
-			this._dbContext = dbContext;
-			this._articlesCategoriesService = articlesCategoriesService;
-			this._imagesService = imagesService;
+			_dbContext = dbContext;
+			_articlesCategoriesService = articlesCategoriesService;
+			_imagesService = imagesService;
+			_articlesSubCategoriesService = articlesSubCategoriesService;
 		}
 
 		public async Task<string> CreateArticleAsync(string userId, CreateArticleRequest request)
@@ -48,6 +51,13 @@ namespace Blog.Infrastructure.Data.Services
 					await _articlesCategoriesService.AddAsync(article.Id, category);
 				}
 			}
+			if (request.SubCategories != null)
+			{
+				foreach (var subCategory in request.SubCategories)
+				{
+					await _articlesSubCategoriesService.AddAsync(article.Id, subCategory);
+				}
+			}
 
 			return article.Id;
 		}
@@ -56,13 +66,13 @@ namespace Blog.Infrastructure.Data.Services
 		{
 			var article = await _dbContext
 				.Articles
-				.Where(a => a.Id == articleId && !a.IsDeleted)
-				.FirstOrDefaultAsync();
+				.FirstOrDefaultAsync(a => a.Id == articleId && !a.IsDeleted);
 
 			article.IsDeleted = true;
-			_dbContext.Articles.Update(article);
 
 			await _articlesCategoriesService.DeleteAsync(articleId);
+			await _articlesSubCategoriesService.DeleteAsync(articleId);
+
 			await _dbContext.SaveChangesAsync();
 
 			return article.Id;

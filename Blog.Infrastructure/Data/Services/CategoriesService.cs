@@ -1,16 +1,19 @@
 ﻿using Blog.Core.Entities;
 using Blog.Infrastructure.DTOs.Categories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Blog.Infrastructure.Data.Services
 {
 	public class CategoriesService
 	{
 		private readonly ApplicationDbContext dbContext;
+		private readonly ILogger<CategoriesService> _logger;
 
-		public CategoriesService(ApplicationDbContext dbContext)
+		public CategoriesService(ApplicationDbContext dbContext, ILogger<CategoriesService> logger)
 		{
 			this.dbContext = dbContext;
+			this._logger = logger;
 		}
 
 		public async Task<IEnumerable<CategoriesListingDTO>> GetAllAsync()
@@ -30,7 +33,9 @@ namespace Blog.Infrastructure.Data.Services
 
 		public async Task<string> CreateAsync(string name)
 		{
-			if (!string.IsNullOrWhiteSpace(name))
+			var errorMessage = string.Empty;
+
+			if (!string.IsNullOrWhiteSpace(name) || name.Length <= 80)
 			{
 				var category = new Category
 				{
@@ -44,7 +49,9 @@ namespace Blog.Infrastructure.Data.Services
 			}
 			else
 			{
-				return "Invalid category name!";
+				errorMessage = "Invalid category name!";
+				_logger.LogError(errorMessage);
+				return errorMessage;
 			}
 		}
 	}

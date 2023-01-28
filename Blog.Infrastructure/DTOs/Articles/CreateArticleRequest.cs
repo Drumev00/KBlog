@@ -6,7 +6,6 @@ namespace Blog.Infrastructure.DTOs.Articles
 	public class CreateArticleRequest
 	{
 		[Required]
-		[MinLength(3)]
 		[MaxLength(120)]
 		public string Title { get; set; } = null!;
 
@@ -16,6 +15,8 @@ namespace Blog.Infrastructure.DTOs.Articles
 		[Required]
 		public IFormFile TitlePicture { get; set; } = null!;
 
-		public IEnumerable<string> Categories { get; set; }
+		public IEnumerable<string> Categories { get; set; } = null!;
+
+		public IEnumerable<string> SubCategories { get; set; } = null!;
 	}
 }

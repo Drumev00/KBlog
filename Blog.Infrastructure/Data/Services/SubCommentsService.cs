@@ -1,15 +1,18 @@
 ﻿using Blog.Core.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Blog.Infrastructure.Data.Services
 {
 	public class SubCommentsService
 	{
 		private readonly ApplicationDbContext _dbContext;
+		private readonly ILogger<SubCommentsService> _logger;
 
-		public SubCommentsService(ApplicationDbContext dbContext)
+		public SubCommentsService(ApplicationDbContext dbContext, ILogger<SubCommentsService> logger)
 		{
 			_dbContext = dbContext;
+			_logger = logger;
 		}
 
 		public async Task<string> DeleteSubCommentAsync(string subCommentId, string userId)
@@ -18,9 +21,13 @@ namespace Blog.Infrastructure.Data.Services
 				.SubComments
 				.FirstOrDefaultAsync(sc => sc.Id == subCommentId && sc.UserId == userId && !sc.IsDeleted);
 
+			var errorMessage = string.Empty;
+
 			if (subComment == null)
 			{
-				throw new ArgumentNullException("Such subcomment does not exists.");
+				errorMessage = "Such subcomment does not exists.";
+				_logger.LogError(errorMessage);
+				return errorMessage;
 			}
 
 			subComment.IsDeleted = true;
@@ -38,17 +45,22 @@ namespace Blog.Infrastructure.Data.Services
 			var subComment = await _dbContext
 				.SubComments
 				.FirstOrDefaultAsync(sc => sc.Id == subCommentId && !sc.IsDeleted);
+			var errorMessage = string.Empty;
 
-			if (!string.IsNullOrWhiteSpace(newContent))
+			if (!string.IsNullOrWhiteSpace(newContent) || newContent.Length <= 4000)
 			{
 				if (subComment == null)
 				{
-					throw new ArgumentNullException("Subcomment cannot be found or it is deleted.");
+					errorMessage = "Subcomment cannot be found or it is deleted.";
+					_logger.LogError(errorMessage);
+					return errorMessage;
 				}
 
 				if (subComment.UserId != userId)
 				{
-					throw new ArgumentException("User can only edit his own subcomments.");
+					errorMessage = "User can only edit his own subcomments.";
+					_logger.LogError(errorMessage);
+					return errorMessage;
 				}
 
 				subComment.Content = newContent;
@@ -69,18 +81,13 @@ namespace Blog.Infrastructure.Data.Services
 
 		public async Task<string> SubCommentAsync(string content, string userId, string rootCommentId)
 		{
+			var errorMessage = string.Empty;
+
 			if (string.IsNullOrWhiteSpace(content))
 			{
-				throw new ArgumentException("Comments with no content cannot exist.");
-			}
-
-			var comment = await _dbContext
-				.Comments
-				.FirstOrDefaultAsync(c => c.Id == rootCommentId && !c.IsDeleted);
-
-			if (comment == null)
-			{
-				throw new ArgumentNullException("Comment cannot be found.");
+				errorMessage = "Comments with no content cannot exist.";
+				_logger.LogError(errorMessage);
+				return errorMessage;
 			}
 
 			var subComment = new SubComment

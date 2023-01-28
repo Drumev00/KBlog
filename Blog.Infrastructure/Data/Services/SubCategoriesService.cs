@@ -1,21 +1,27 @@
 ﻿using Blog.Core.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace Blog.Infrastructure.Data.Services
 {
 	public class SubCategoriesService
 	{
 		private readonly ApplicationDbContext dbContext;
+		private readonly ILogger<SubCategoriesService> _logger;
 
-		public SubCategoriesService(ApplicationDbContext dbContext)
+		public SubCategoriesService(ApplicationDbContext dbContext, ILogger<SubCategoriesService> logger)
 		{
 			this.dbContext = dbContext;
+			this._logger = logger;
 		}
 
 		public async Task<string> CreateAsync(string name, IEnumerable<string> categoryIds)
 		{
-			if (string.IsNullOrWhiteSpace(name))
+			var errorMessage = string.Empty;
+			if (string.IsNullOrWhiteSpace(name) || name.Length > 80)
 			{
-				return "Inappropriate name.";
+				errorMessage = "Inappropriate name.";
+				_logger.LogError(errorMessage);
+				return errorMessage;
 			}
 
 			var subCategory = new SubCategory()
