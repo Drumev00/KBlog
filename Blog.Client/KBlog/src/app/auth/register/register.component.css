@@ -1,0 +1,48 @@
+form {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  min-height: 600px;
+  justify-content: space-evenly;
+}
+
+.btn {
+  margin-top: 15px;
+  align-self: center;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.register-pic-section {
+  display: flex;
+}
+
+.register-pic {
+  align-self: center;
+  min-height: 400px;
+}
+
+.page-title {
+  text-align: center;
+}
+
+.iconized-input {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+}
+
+input {
+  margin-left: 15px;
+}
+
+label {
+  padding-left: 32px;
+}
+
+.errorMessage {
+  margin-left: 35px;
+}

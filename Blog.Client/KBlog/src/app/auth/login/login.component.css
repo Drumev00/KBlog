@@ -1,0 +1,118 @@
+#forgot {
+  min-width: 100px;
+  margin-left: auto;
+}
+
+.outer {
+  width: 100%;
+  height: calc(100vh - 56px);
+  background: linear-gradient(to top, #c9c9ff 50%, #6e6ef6 90%) no-repeat;
+}
+
+.panel-heading {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-inline {
+  align-self: flex-start;
+  margin-left: 15%;
+}
+
+.form-inline a {
+  font-size: 14px;
+}
+
+.btn {
+  margin-top: 20px;
+  border-radius: 15px;
+  align-self: center;
+}
+
+.panel {
+  min-height: 380px;
+  box-shadow: 20px 20px 80px rgb(218, 218, 218);
+  border-radius: 12px;
+  margin-top: 100px;
+}
+
+.input-field {
+  border-radius: 5px;
+  padding: 5px;
+  color: #4343ff;
+  width: 87%;
+}
+
+input {
+  width: 87%;
+  box-shadow: none;
+  border: 1px solid grey;
+  border-radius: 6px;
+}
+
+/* places border if removed */
+input:focus {
+  outline: none;
+}
+
+/* Add error handling messages and indications */
+
+small {
+  display: block;
+}
+
+img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+  position: relative;
+}
+
+.pass {
+  display: flex;
+  align-items: baseline;
+}
+
+#togglePass {
+  cursor: pointer;
+  position: relative;
+  right: 38px;
+  cursor: pointer;
+  z-index: 1;
+  color: #4343ff;
+}
+
+#facebook-icon {
+  color: #385898;
+  font-size: 34px;
+}
+
+.bordert {
+  border-top: 1px solid #aaa;
+  position: relative;
+}
+
+.bordert::after {
+  content: "or connect with:";
+  position: absolute;
+  top: -13px;
+  left: 40%;
+  background-color: #fff;
+  padding: 0px 8px;
+}
+
+.block {
+  display: block;
+}
+
+.align {
+  align-self: baseline;
+  padding-left: 3rem;
+}

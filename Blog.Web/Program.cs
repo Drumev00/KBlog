@@ -24,16 +24,6 @@ try
 
 	Log.Information("Starting up...");
 	builder.Services.AddControllers();
-
-	builder.Services.AddDbContext<ApplicationDbContext>(options =>
-	options.UseSqlServer(
-						configuration.GetConnectionString("Default")))
-					.AddApplicationServices()
-					.Configure<AuthMessageSenderOptions>(configuration)
-					.AddSwaggerConfig()
-					.AddIdentityService()
-					.AddFacebookAuth(configuration);
-
 	var tokenValidationParams = new TokenValidationParameters()
 	{
 		ValidateIssuer = true,
@@ -44,8 +34,18 @@ try
 		ValidIssuer = configuration["JWT:ValidIssuer"],
 		IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]))
 	};
-
 	builder.Services.AddSingleton(tokenValidationParams);
+
+	builder.Services.AddDbContext<ApplicationDbContext>(options =>
+	options.UseSqlServer(
+						configuration.GetConnectionString("Default")))
+					.AddApplicationServices()
+					.Configure<AuthMessageSenderOptions>(configuration)
+					.AddSwaggerConfig()
+					.AddIdentityService()
+					.AddJwtAuthentication(configuration, tokenValidationParams)
+					.ConfigureCors()
+					.AddFacebookAuth(configuration);
 
 	var app = builder.Build();
 
@@ -62,6 +62,7 @@ try
 	app.ApplyMigrations();
 	app.UseHttpsRedirection();
 
+	app.UseCors("EnableCORS");
 	app.UseRouting();
 	app.UseStaticFiles();
 

@@ -1,0 +1,52 @@
+<div class="outer">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="offset-md-2 col-lg-5 col-md-7 offset-lg-3 offset-md-3">
+                <div class="panel border bg-white">
+                    <div class="panel-heading">
+                        <h3 class="pt-3 font-weight-bold">Login</h3>
+                    </div>
+                    <div class="panel-body p-3">
+                        <form [formGroup]="loginForm">
+                            <div class="form-group input-field pt-3">
+                                <i class="fa-solid fa-user ms-2"></i>
+                                <input formControlName="username" required maxlength="50" class="m-2 p-1" type="text" placeholder="Enter username...">
+                                <span class="text-danger" *ngIf="
+                                    !username.valid &&
+                                    username.touched">
+                                    Username field is not valid.
+                                </span>
+                                <span class="text-danger block" *ngIf="username.errors?.['maxlength']">
+                                    Username must be between 1 and 50 characters long.
+                                </span>
+                            </div>
+                            <div class="form-group input-field pt-3 pass">
+                                <i class="fa-solid fa-key ms-2"></i>
+                                <input formControlName="password" required minlength="6" class="m-2 p-1" [type]="inputType" placeholder="Enter password..."/>
+                                <i id="togglePass" (click)="togglePass()" class="fa-solid {{eyeIcon}}"></i>
+                            </div>
+                        <span class="text-danger align" *ngIf="!controls['password'].valid &&
+                            controls['password'].touched">
+                            Password field is not valid.
+                        </span>
+                        <span class="text-danger align" *ngIf="controls['password'].errors?.['minlength'] &&
+                            controls['password'].touched && !controls['password'].valid">
+                            Password must be at least 6 characters long.
+                        </span>
+                            <div class="form-inline fr">
+                                <a class="font-weight-bold clickable" id="forgot">Forgot password?</a>
+                            </div>
+                            <button (click)="onSubmit()" type="submit" class="btn btn-primary btn-block mt-4 w-75">Login</button>
+                            <small class="text-center pt-4 text-muted">Don't have an account yet? <a routerLink="/register">Sign Up</a></small>
+                        </form>
+                    </div>
+                    <div class="mx-3 my-2 py-2 bordert">
+                        <div class="text-center py-3">
+                            <i id="facebook-icon" class="fa-brands fa-facebook"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

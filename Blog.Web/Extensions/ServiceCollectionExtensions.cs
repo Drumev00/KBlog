@@ -5,8 +5,11 @@ using Blog.Infrastructure.Data.Services.Rate.Articles;
 using Blog.Infrastructure.Data.Services.Rate.Comments;
 using Blog.Infrastructure.Data.Services.Rate.SubComments;
 using Blog.Infrastructure.Data.Services.SendGrid;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 
@@ -107,6 +110,35 @@ namespace Blog.Web.Extensions
 						return Task.CompletedTask;
 					}
 				};
+			});
+
+			return services;
+		}
+
+		public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration, TokenValidationParameters tokenValidationParameters)
+		{
+			services.AddAuthentication(options =>
+			{
+				options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+			}).AddJwtBearer(options =>
+			{
+				options.TokenValidationParameters = tokenValidationParameters;
+			});
+
+			return services;
+		}
+
+		public static IServiceCollection ConfigureCors(this IServiceCollection services)
+		{
+			services.AddCors(options =>
+			{
+				options.AddPolicy("EnableCORS", builder =>
+				{
+					builder.AllowAnyOrigin()
+					.AllowAnyMethod()
+					.AllowAnyHeader();
+				});
 			});
 
 			return services;

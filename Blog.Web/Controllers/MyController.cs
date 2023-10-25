@@ -9,4 +9,5 @@ namespace Blog.Web.Controllers
 	public class MyController : Controller
 	{
 	}
+
 }

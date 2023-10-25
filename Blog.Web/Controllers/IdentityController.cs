@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Blog.Web.Controllers
 {
-	[AllowAnonymous]
 	public class IdentityController : MyController
 	{
 		private readonly AuthenticationService _authenticationService;
@@ -14,6 +13,7 @@ namespace Blog.Web.Controllers
 			_authenticationService = authenticationService;
 		}
 
+		[AllowAnonymous]
 		[HttpPost("register")]
 		public Task<string> Register(RegisterRequest request)
 		{
@@ -22,6 +22,8 @@ namespace Blog.Web.Controllers
 			return result;
 		}
 
+		
+		[AllowAnonymous]
 		[HttpPost("login")]
 		public Task<AuthResponseModel> Login(LoginRequest request)
 		{
@@ -31,11 +33,13 @@ namespace Blog.Web.Controllers
 		}
 
 		[HttpPost("refreshToken")]
-		public AuthResponseModel RefreshToken(string jwtToken)
+		public Task<AuthResponseModel> RefreshToken(string jwtToken)
 		{
 			var result = _authenticationService.VerifyToken(jwtToken);
 
 			return result;
 		}
+
+
 	}
 }

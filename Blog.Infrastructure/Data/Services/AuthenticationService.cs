@@ -8,7 +8,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using static Blog.Core.Constants;
 
 namespace Blog.Infrastructure.Data.Services
 {
@@ -44,6 +43,12 @@ namespace Blog.Infrastructure.Data.Services
 				_logger.LogError(errorMessage, request.Username);
 				return errorMessage;
 			}
+			if (request.Password != request.ConfirmPassword)
+			{
+				errorMessage = "Passwords should match.";
+				_logger.LogError(errorMessage, request.Password);
+				return errorMessage;
+			}
 
 			User user = new User()
 			{
@@ -53,15 +58,8 @@ namespace Blog.Infrastructure.Data.Services
 				UserName = request.Username
 			};
 
-			if (request.Password != request.ConfirmPassword)
-			{
-				errorMessage = "Passwords should match.";
-				_logger.LogError(errorMessage, request.Password);
-				return errorMessage;
-			}
 
 			var result = await _userManager.CreateAsync(user, request.Password);
-			await _userManager.AddToRoleAsync(user, Roles.AdminRole);
 
 			if (!result.Succeeded)
 			{
@@ -93,7 +91,7 @@ namespace Blog.Infrastructure.Data.Services
 			var validPass = await _userManager.CheckPasswordAsync(user, request.Password);
 			if (!validPass)
 			{
-				errorMessage = $"Wrong password.";
+				errorMessage = "Wrong password.";
 				_logger.LogError(errorMessage);
 				response.Errors.Add(errorMessage);
 			}
@@ -103,14 +101,13 @@ namespace Blog.Infrastructure.Data.Services
 				return response;
 			}
 
-			response.JwtToken = GenerateJwtToken(user.Id, user.Email);
+			response.JwtToken = await GenerateJwtToken(user.Id, user.Email);
 			response.ExpirationTime = DateTime.UtcNow.AddHours(1);
 
 			return response;
 		}
 
-
-		public AuthResponseModel VerifyToken(string jwtToken)
+		public async Task<AuthResponseModel> VerifyToken(string jwtToken)
 		{
 			var response = new AuthResponseModel();
 			var jwtTokenHandler = new JwtSecurityTokenHandler();
@@ -148,27 +145,31 @@ namespace Blog.Infrastructure.Data.Services
 			}
 
 
-			var jwtSecurityTokenn = jwtTokenHandler.ReadJwtToken(jwtToken);
-			var userId = jwtSecurityTokenn.Claims.FirstOrDefault(c => c.Type == "nameid")!.Value;
-			var email = jwtSecurityTokenn.Claims.FirstOrDefault(c => c.Type == "email")!.Value;
+			var readToken = jwtTokenHandler.ReadJwtToken(jwtToken);
+			var userId = readToken.Claims.FirstOrDefault(c => c.Type == "nameid")!.Value;
+			var email = readToken.Claims.FirstOrDefault(c => c.Type == "email")!.Value;
 
 			response.ExpirationTime = expiryDate;
-			response.JwtToken = GenerateJwtToken(userId, email);
+			response.JwtToken = await GenerateJwtToken(userId, email);
 
 			return response;
 		}
 
-		private string GenerateJwtToken(string userId, string email)
+		private async Task<string> GenerateJwtToken(string userId, string email)
 		{
 			var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]!));
 
 			var tokenHandler = new JwtSecurityTokenHandler();
+
+			var userRole = await _dbContext.UserRoles.FirstOrDefaultAsync(ur => ur.UserId == userId);
 			var tokenDescriptor = new SecurityTokenDescriptor
 			{
 				Subject = new ClaimsIdentity(new Claim[]
 				{
 					new Claim(ClaimTypes.NameIdentifier, userId),
-					new Claim(ClaimTypes.Email, email)
+					new Claim(ClaimTypes.Email, email),
+					new Claim(ClaimTypes.Role, userRole?.RoleId),
+					
 				}),
 				Expires = DateTime.UtcNow.AddHours(1),
 				SigningCredentials = new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256Signature),

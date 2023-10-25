@@ -1,6 +1,6 @@
 ﻿namespace Blog.Infrastructure.DTOs.Authentication
 {
-	public class AuthResponseModel
+	public record AuthResponseModel
 	{
 		public AuthResponseModel()
 		{
