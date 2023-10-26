@@ -5,13 +5,22 @@ import { BehaviorSubject } from 'rxjs';
 import { User } from './user.model';
 import { environment } from 'src/environments/environment';
 
-class RegisterUserRequest {
-  constructor(
-    public username: string,
-    public email: string,
-    public password: string,
-    public repeatPassword: string
-  ) {}
+interface RegisterUserRequest {
+  username: string;
+  email: string;
+  password: string;
+  repeatPassword: string;
+}
+
+interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+interface LoginResponse {
+  jwtToken: string;
+  expirationTime: Date;
+  errors: Array<string>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -30,5 +39,9 @@ export class AuthService {
     return this.http.post(this.registerPath, body, {
       responseType: 'text',
     });
+  }
+
+  login(body: LoginRequest) {
+    return this.http.post<LoginResponse>(this.loginPath, body);
   }
 }

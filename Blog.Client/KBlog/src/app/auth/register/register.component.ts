@@ -60,14 +60,19 @@ export class RegisterComponent implements OnInit {
     return this.registerForm.get('username');
   }
 
+  get password() {
+    return this.registerForm.get('password');
+  }
+
   onSubmit() {
     if (!this.registerForm.valid) {
       console.log(this.registerForm);
       //this.toastr.error(this.registerForm.errors['error']['error']['message']);
       ValidateForm.validateAllFormFields(this.registerForm);
     } else {
-      this.authService.registerUser(this.registerForm.value).subscribe();
-      this.registerForm.reset();
+      this.authService
+        .registerUser(this.registerForm.value)
+        .subscribe((res) => console.log(res));
     }
   }
 
