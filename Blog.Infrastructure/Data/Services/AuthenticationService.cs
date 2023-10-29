@@ -99,60 +99,37 @@ namespace Blog.Infrastructure.Data.Services
 				return response;
 			}
 
-			response = await GenerateJwtToken(user);
+			response = await GenerateJwtToken(user, null);
 
 			return response;
 		}
 
-		//public async Task<AuthResponseModel> VerifyToken(string jwtToken)
-		//{
-		//	var response = new AuthResponseModel();
-		//	var jwtTokenHandler = new JwtSecurityTokenHandler();
-		//	var errorMessage = string.Empty;
+		public async Task<AuthResponseModel> VerifyAndGenerateTokenAsync(TokenRequest tokenRequest)
+		{
+			var jwtTokenHandler = new JwtSecurityTokenHandler();
+			var storedToken = await _dbContext.RefreshTokens.FirstOrDefaultAsync(t => t.Token == tokenRequest.RefreshToken);
+			var user = await _userManager.FindByIdAsync(storedToken.UserId);
 
-		//	// Validation 1
-		//	var tokenInVerification = jwtTokenHandler.ValidateToken(jwtToken, _tokenValidationParams, out var validatedToken);
+			try
+			{
+				var tokenCheckResult = jwtTokenHandler.ValidateToken(tokenRequest.Token, _tokenValidationParams, out var validatedToken);
 
-		//	// Validation 2
-		//	if (validatedToken is JwtSecurityToken jwtSecurityToken)
-		//	{
-		//		var isRightAlgoritmUsed = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
-		//		if (!isRightAlgoritmUsed)
-		//		{
-		//			errorMessage = "Wrong algoritm is used.";
-		//			_logger.LogError(errorMessage);
-		//			response.Errors.Add(errorMessage);
-		//		}
-		//	}
+				return await GenerateJwtToken(user, storedToken);
+			}
+			catch (SecurityTokenExpiredException)
+			{
+				if (storedToken.EndsOn >= DateTime.UtcNow)
+				{
+					return await GenerateJwtToken(user, storedToken);
+				}
+				else
+				{
+					return await GenerateJwtToken(user, null);
+				}
+			}
+		}
 
-		//	// Validation 3
-		//	var utcExpiryDate = long.Parse(tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp)!.Value);
-
-		//	var expiryDate = UnixTimeStampToDateTime(utcExpiryDate);
-
-		//	if (expiryDate > DateTime.UtcNow)
-		//	{
-		//		errorMessage = "Token has not expired yet.";
-		//		_logger.LogError(errorMessage);
-		//		response.Errors.Add(errorMessage);
-		//	}
-		//	if (response.Errors.Count > 0)
-		//	{
-		//		return response;
-		//	}
-
-
-		//	var readToken = jwtTokenHandler.ReadJwtToken(jwtToken);
-		//	var userId = readToken.Claims.FirstOrDefault(c => c.Type == "nameid")!.Value;
-		//	var email = readToken.Claims.FirstOrDefault(c => c.Type == "email")!.Value;
-
-		//	response.ExpirationTime = expiryDate;
-		//	response.JwtToken = await GenerateJwtToken(userId, email);
-
-		//	return response;
-		//}
-
-		private async Task<AuthResponseModel> GenerateJwtToken(User user)
+		private async Task<AuthResponseModel> GenerateJwtToken(User user, RefreshToken inputRefreshToken)
 		{
 			var authClaims = new List<Claim>()
 			{
@@ -171,9 +148,36 @@ namespace Blog.Infrastructure.Data.Services
 											signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256));
 
 			var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+
+			if (inputRefreshToken != null)
+			{
+				var inputTokenResponse = new AuthResponseModel
+				{
+					JwtToken = jwtToken,
+					RefreshToken = inputRefreshToken.Token,
+					ExpiresAt = token.ValidTo,
+				};
+
+				return inputTokenResponse;
+			}
+
+			var refreshToken = new RefreshToken()
+			{
+				JwtId = token.Id,
+				IsRevoked = false,
+				UserId = user.Id,
+				AddedOn = DateTime.UtcNow,
+				EndsOn = DateTime.UtcNow.AddMonths(6),
+				Token = Guid.NewGuid().ToString() + "--" + Guid.NewGuid().ToString(),
+			};
+			await _dbContext.RefreshTokens.AddAsync(refreshToken);
+			await _dbContext.SaveChangesAsync();
+
+
 			var response = new AuthResponseModel
 			{
 				JwtToken = jwtToken,
+				RefreshToken = refreshToken.Token,
 				ExpiresAt = token.ValidTo,
 			};
 

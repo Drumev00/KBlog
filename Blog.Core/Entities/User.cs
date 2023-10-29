@@ -19,6 +19,7 @@ namespace Blog.Core.Entities
 			SubComments = new HashSet<SubComment>();
 			SubCommentsLikes = new HashSet<SubCommentsLikes>();
 			SubCommentsDislikes = new HashSet<SubCommentsDislikes>();
+			RefreshTokens = new HashSet<RefreshToken>();
 		}
 
 		public DateTime CreatedOn { get; set; }
@@ -43,5 +44,7 @@ namespace Blog.Core.Entities
 		public virtual ICollection<SubCommentsLikes> SubCommentsLikes { get; set; }
 
 		public virtual ICollection<SubCommentsDislikes> SubCommentsDislikes { get; set; }
+
+		public virtual ICollection<RefreshToken> RefreshTokens { get; set; }
 	}
 }

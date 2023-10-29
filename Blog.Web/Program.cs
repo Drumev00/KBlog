@@ -26,12 +26,17 @@ try
 	builder.Services.AddControllers();
 	var tokenValidationParams = new TokenValidationParameters()
 	{
-		ValidateIssuer = true,
-		ValidateAudience = true,
 		ValidateIssuerSigningKey = true,
-		ValidAudience = configuration["JWT:ValidAudience"],
+		IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(configuration["JWT:Secret"])),
+
+		ValidateIssuer = true,
 		ValidIssuer = configuration["JWT:ValidIssuer"],
-		IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(configuration["JWT:Secret"]))
+
+		ValidateAudience = true,
+		ValidAudience = configuration["JWT:ValidAudience"],
+
+		ValidateLifetime = true,
+		ClockSkew = TimeSpan.Zero
 	};
 	builder.Services.AddSingleton(tokenValidationParams);
 
@@ -85,7 +90,6 @@ try
 catch (Exception ex)
 {
 	Log.Fatal(ex, "Application accidentally crashed!");
-	throw;
 }
 finally
 {

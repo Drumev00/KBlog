@@ -32,13 +32,13 @@ namespace Blog.Web.Controllers
 			return result;
 		}
 
-		//[HttpPost("refreshToken")]
-		//public Task<AuthResponseModel> RefreshToken(string jwtToken)
-		//{
-		//	var result = _authenticationService.VerifyToken(jwtToken);
+		[HttpPost("refresh-token")]
+		public Task<AuthResponseModel> RefreshToken(TokenRequest tokenRequest)
+		{
+			var result = _authenticationService.VerifyAndGenerateTokenAsync(tokenRequest);
 
-		//	return result;
-		//}
+			return result;
+		}
 
 
 	}

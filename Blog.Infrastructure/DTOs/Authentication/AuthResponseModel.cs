@@ -12,6 +12,8 @@
 
 		public DateTime ExpiresAt { get; set; }
 
+		public string RefreshToken { get; set; }
+
 		public ICollection<string> Errors { get; }
 	}
 }
