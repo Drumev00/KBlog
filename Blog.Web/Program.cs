@@ -28,11 +28,10 @@ try
 	{
 		ValidateIssuer = true,
 		ValidateAudience = true,
-		ValidateLifetime = true,
 		ValidateIssuerSigningKey = true,
 		ValidAudience = configuration["JWT:ValidAudience"],
 		ValidIssuer = configuration["JWT:ValidIssuer"],
-		IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]))
+		IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(configuration["JWT:Secret"]))
 	};
 	builder.Services.AddSingleton(tokenValidationParams);
 
@@ -43,7 +42,7 @@ try
 					.Configure<AuthMessageSenderOptions>(configuration)
 					.AddSwaggerConfig()
 					.AddIdentityService()
-					.AddJwtAuthentication(configuration, tokenValidationParams)
+					.AddJwtAuthentication(tokenValidationParams)
 					.ConfigureCors()
 					.AddFacebookAuth(configuration);
 
@@ -62,7 +61,6 @@ try
 	app.ApplyMigrations();
 	app.UseHttpsRedirection();
 
-	app.UseCors("EnableCORS");
 	app.UseRouting();
 	app.UseStaticFiles();
 
@@ -73,6 +71,7 @@ try
 		options.RoutePrefix = string.Empty;
 	});
 
+	app.UseCors("EnableCORS");
 	app.UseAuthentication();
 	app.UseAuthorization();
 

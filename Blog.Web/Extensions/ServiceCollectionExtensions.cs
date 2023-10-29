@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
+using System.Text;
 
 namespace Blog.Web.Extensions
 {
@@ -115,14 +116,17 @@ namespace Blog.Web.Extensions
 			return services;
 		}
 
-		public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration, TokenValidationParameters tokenValidationParameters)
+		public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, TokenValidationParameters tokenValidationParameters)
 		{
 			services.AddAuthentication(options =>
 			{
 				options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
 				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+				options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 			}).AddJwtBearer(options =>
 			{
+				options.SaveToken = true;
+				options.RequireHttpsMetadata = false;
 				options.TokenValidationParameters = tokenValidationParameters;
 			});
 
@@ -135,7 +139,7 @@ namespace Blog.Web.Extensions
 			{
 				options.AddPolicy("EnableCORS", builder =>
 				{
-					builder.AllowAnyOrigin()
+					builder.WithOrigins("http://localhost:4200", "https://localhost:57295")
 					.AllowAnyMethod()
 					.AllowAnyHeader();
 				});

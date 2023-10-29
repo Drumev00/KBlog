@@ -161,15 +161,12 @@ namespace Blog.Infrastructure.Data.Services
 
 			var tokenHandler = new JwtSecurityTokenHandler();
 
-			var userRole = await _dbContext.UserRoles.FirstOrDefaultAsync(ur => ur.UserId == userId);
 			var tokenDescriptor = new SecurityTokenDescriptor
 			{
 				Subject = new ClaimsIdentity(new Claim[]
 				{
 					new Claim(ClaimTypes.NameIdentifier, userId),
 					new Claim(ClaimTypes.Email, email),
-					new Claim(ClaimTypes.Role, userRole?.RoleId),
-					
 				}),
 				Expires = DateTime.UtcNow.AddHours(1),
 				SigningCredentials = new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256Signature),
