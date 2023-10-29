@@ -34,12 +34,12 @@ namespace Blog.Infrastructure.Data.Services
 
 		public async Task<string> Register(RegisterRequest request)
 		{
-			var userExists = await _userManager.FindByNameAsync(request.Username);
+			var userExists = await _userManager.FindByEmailAsync(request.Email);
 			var errorMessage = string.Empty;
 
 			if (userExists != null)
 			{
-				errorMessage = "User already exists.";
+				errorMessage = "Email address already exists.";
 				_logger.LogError(errorMessage, request.Username);
 				return errorMessage;
 			}
@@ -73,9 +73,7 @@ namespace Blog.Infrastructure.Data.Services
 
 		public async Task<AuthResponseModel> Login(LoginRequest request)
 		{
-			var user = await _dbContext
-				.Users
-				.FirstOrDefaultAsync(u => u.Email == request.Email);
+			var user = await _userManager.FindByEmailAsync(request.Email);
 
 			var errorMessage = string.Empty;
 
@@ -101,82 +99,86 @@ namespace Blog.Infrastructure.Data.Services
 				return response;
 			}
 
-			response.JwtToken = await GenerateJwtToken(user.Id, user.Email);
-			response.ExpirationTime = DateTime.UtcNow.AddHours(1);
+			response = await GenerateJwtToken(user);
 
 			return response;
 		}
 
-		public async Task<AuthResponseModel> VerifyToken(string jwtToken)
+		//public async Task<AuthResponseModel> VerifyToken(string jwtToken)
+		//{
+		//	var response = new AuthResponseModel();
+		//	var jwtTokenHandler = new JwtSecurityTokenHandler();
+		//	var errorMessage = string.Empty;
+
+		//	// Validation 1
+		//	var tokenInVerification = jwtTokenHandler.ValidateToken(jwtToken, _tokenValidationParams, out var validatedToken);
+
+		//	// Validation 2
+		//	if (validatedToken is JwtSecurityToken jwtSecurityToken)
+		//	{
+		//		var isRightAlgoritmUsed = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
+		//		if (!isRightAlgoritmUsed)
+		//		{
+		//			errorMessage = "Wrong algoritm is used.";
+		//			_logger.LogError(errorMessage);
+		//			response.Errors.Add(errorMessage);
+		//		}
+		//	}
+
+		//	// Validation 3
+		//	var utcExpiryDate = long.Parse(tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp)!.Value);
+
+		//	var expiryDate = UnixTimeStampToDateTime(utcExpiryDate);
+
+		//	if (expiryDate > DateTime.UtcNow)
+		//	{
+		//		errorMessage = "Token has not expired yet.";
+		//		_logger.LogError(errorMessage);
+		//		response.Errors.Add(errorMessage);
+		//	}
+		//	if (response.Errors.Count > 0)
+		//	{
+		//		return response;
+		//	}
+
+
+		//	var readToken = jwtTokenHandler.ReadJwtToken(jwtToken);
+		//	var userId = readToken.Claims.FirstOrDefault(c => c.Type == "nameid")!.Value;
+		//	var email = readToken.Claims.FirstOrDefault(c => c.Type == "email")!.Value;
+
+		//	response.ExpirationTime = expiryDate;
+		//	response.JwtToken = await GenerateJwtToken(userId, email);
+
+		//	return response;
+		//}
+
+		private async Task<AuthResponseModel> GenerateJwtToken(User user)
 		{
-			var response = new AuthResponseModel();
-			var jwtTokenHandler = new JwtSecurityTokenHandler();
-			var errorMessage = string.Empty;
-
-			// Validation 1
-			var tokenInVerification = jwtTokenHandler.ValidateToken(jwtToken, _tokenValidationParams, out var validatedToken);
-
-			// Validation 2
-			if (validatedToken is JwtSecurityToken jwtSecurityToken)
+			var authClaims = new List<Claim>()
 			{
-				var isRightAlgoritmUsed = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
-				if (!isRightAlgoritmUsed)
-				{
-					errorMessage = "Wrong algoritm is used.";
-					_logger.LogError(errorMessage);
-					response.Errors.Add(errorMessage);
-				}
-			}
-
-			// Validation 3
-			var utcExpiryDate = long.Parse(tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp)!.Value);
-
-			var expiryDate = UnixTimeStampToDateTime(utcExpiryDate);
-
-			if (expiryDate > DateTime.UtcNow)
-			{
-				errorMessage = "Token has not expired yet.";
-				_logger.LogError(errorMessage);
-				response.Errors.Add(errorMessage);
-			}
-			if (response.Errors.Count > 0)
-			{
-				return response;
-			}
-
-
-			var readToken = jwtTokenHandler.ReadJwtToken(jwtToken);
-			var userId = readToken.Claims.FirstOrDefault(c => c.Type == "nameid")!.Value;
-			var email = readToken.Claims.FirstOrDefault(c => c.Type == "email")!.Value;
-
-			response.ExpirationTime = expiryDate;
-			response.JwtToken = await GenerateJwtToken(userId, email);
-
-			return response;
-		}
-
-		private async Task<string> GenerateJwtToken(string userId, string email)
-		{
-			var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]!));
-
-			var tokenHandler = new JwtSecurityTokenHandler();
-
-			var tokenDescriptor = new SecurityTokenDescriptor
-			{
-				Subject = new ClaimsIdentity(new Claim[]
-				{
-					new Claim(ClaimTypes.NameIdentifier, userId),
-					new Claim(ClaimTypes.Email, email),
-				}),
-				Expires = DateTime.UtcNow.AddHours(1),
-				SigningCredentials = new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256Signature),
-				Audience = _configuration["JWT:ValidAudience"]!,
-				Issuer = _configuration["JWT:ValidIssuer"],
+				new Claim(ClaimTypes.Name, user.UserName),
+				new Claim(ClaimTypes.NameIdentifier, user.Id),
+				new Claim(JwtRegisteredClaimNames.Email, user.Email),
+				new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
 			};
-			var token = tokenHandler.CreateToken(tokenDescriptor);
-			var encryptedToken = tokenHandler.WriteToken(token);
 
-			return encryptedToken;
+			var authSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JWT:Secret"]));
+			var token = new JwtSecurityToken(issuer: _configuration["JWT:ValidIssuer"],
+											audience: _configuration["JWT:ValidAudience"],
+											expires: DateTime.UtcNow.AddMinutes(1),
+											claims: authClaims,
+											signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256));
+
+			var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+			var response = new AuthResponseModel
+			{
+				JwtToken = jwtToken,
+				ExpiresAt = token.ValidTo,
+			};
+
+			return response;
+
 		}
 
 		private DateTime UnixTimeStampToDateTime(long unixTimeStamp)

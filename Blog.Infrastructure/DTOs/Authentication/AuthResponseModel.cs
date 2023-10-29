@@ -7,10 +7,11 @@
 			Errors = new List<string>();
 		}
 
+
 		public string JwtToken { get; set; } = null!;
 
-		public DateTime ExpirationTime { get; set; }
+		public DateTime ExpiresAt { get; set; }
 
-		public List<string> Errors { get; set; }
+		public ICollection<string> Errors { get; }
 	}
 }
